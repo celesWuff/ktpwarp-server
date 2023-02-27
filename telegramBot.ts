@@ -1,7 +1,7 @@
 import { Telegraf } from "telegraf";
 import { credentials } from "./auth";
 import { classes } from "./classes";
-import { ENABLE_互动答题_CHECK, TELEGRAM_BOT_API_URL, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, 互动答题_CHECK_DELAY_SECONDS, 互动答题_CLASSES } from "./config";
+import { ENABLE_互动答题_CHECK, TELEGRAM_BOT_API_URL, TELEGRAM_BOT_REPLY_INVALID_QRCODE, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, 互动答题_CHECK_DELAY_SECONDS, 互动答题_CLASSES } from "./config";
 import { KTPWARP_SERVER_VERSION, NODEJS_VERSION } from "./constants";
 import { 互动答题Events, 签到Events } from "./events";
 import { CredentialType, 签到ResultType } from "./types";
@@ -91,10 +91,10 @@ Node.js ${NODEJS_VERSION}
           ctx.reply("二维码格式不正确。");
         }
       } else {
-        ctx.reply("不是课堂派二维码。");
+        TELEGRAM_BOT_REPLY_INVALID_QRCODE ? ctx.reply("不是课堂派二维码。") : null;
       }
     } else {
-      ctx.reply("无法识别二维码。");
+      TELEGRAM_BOT_REPLY_INVALID_QRCODE ? ctx.reply("无法识别二维码。") : null;
     }
   });
 

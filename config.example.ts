@@ -34,6 +34,10 @@ export const TELEGRAM_CHAT_ID = 1234567890;
 // 如果部署 ktpwarp-server 的网络环境可以直接访问 Telegram Bot API，则不需要修改此值
 export const TELEGRAM_BOT_API_URL = "https://api.telegram.org";
 
+// 将二维码提交给 Telegram 机器人时，是否让机器人回应不是课堂派二维码的图片
+// 设置为 true，机器人会发送“不是课堂派二维码”和“无法识别二维码”两种消息
+export const TELEGRAM_BOT_REPLY_INVALID_QRCODE = false;
+
 ////////////////////// 用户设置 //////////////////////
 
 // 用户信息，可以添加多个用户
