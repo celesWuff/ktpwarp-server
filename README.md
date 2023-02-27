@@ -16,13 +16,13 @@ ktpWarp: 课堂派自动签到
 
 - 支持监测互动答题
 
-- 通过 Telegram 机器人、Web 网页前端、iOS MITM 脚本与 Android app 与服务器进行交互，可接收签到结果广播，也可进行提交二维码、手动检查、跳过签到等待时间和取消签到等操作
+- 通过 Telegram 机器人、Web 网页前端、iOS MITM 模块与 Android app 与服务器进行交互，可接收签到结果广播，也可进行提交二维码、手动检查、跳过签到等待时间和取消签到等操作
 
   - Telegram 机器人：已包含在本项目中
 
   - Web 客户端：[ktpwarp-web](https://github.com/celesWuff/ktpwarp-web)
 
-  - iOS MITM 脚本（重定向课堂派扫码结果到 ktpWarp）：[ktpwarp-ios-mitm](https://github.com/celesWuff/ktpwarp-ios-mitm)
+  - iOS MITM 模块（重定向课堂派扫码结果到 ktpWarp）：[ktpwarp-ios-mitm](https://github.com/celesWuff/ktpwarp-ios-mitm)
 
   - Android app：[ktpwarp-android](https://github.com/celesWuff/ktpwarp-android)
 
@@ -38,7 +38,7 @@ ktpWarp 仍处于 Beta 阶段，这代表 ktpWarp 尚未在生产环境中得到
 
 但是，您可以使用上面列出的任何一种交互方式进行签到，仅需进行一次扫码即可为 ktpWarp 系统中的所有用户签到。
 
-Android app 的扫码速度最快，而 iOS MITM 脚本可以让您自行选择任何一种扫码工具，您可以使用您手上最快的扫码器，因此首先推荐使用这两种方式。
+Android app 的扫码速度最快，而 iOS MITM 模块可以让您自行选择任何一种扫码工具，您可以使用您手上最快的扫码器，因此首先推荐使用这两种方式。
 
 ## 部署
 
