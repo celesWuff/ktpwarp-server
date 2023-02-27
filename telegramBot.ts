@@ -29,7 +29,11 @@ Node.js ${NODEJS_VERSION}
 
   const bot = new Telegraf(TELEGRAM_BOT_TOKEN, { telegram: { apiRoot: TELEGRAM_BOT_API_URL } });
 
-  bot.start((ctx) => ctx.reply(motd));
+  bot.start((ctx) =>
+    ctx.reply(motd, {
+      disable_web_page_preview: true,
+    })
+  );
 
   bot.command("check", (ctx) => {
     签到Events.emit("manualCheck");
