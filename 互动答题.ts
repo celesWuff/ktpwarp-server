@@ -1,11 +1,13 @@
 import { credentials } from "./auth";
-import { 互动答题_CHECK_DELAY_SECONDS, 互动答题_CHECK_INTERVAL_SECONDS, 互动答题_CLASSES } from "./config";
+import { 互动答题_CHECK_DELAY_SECONDS, 互动答题_CHECK_INTERVAL_SECONDS } from "./config";
 import { 互动答题Events } from "./events";
-import { CredentialType, 互动答题ClassType } from "./types";
-import { getAuthenticatedHeaders, getReqtimestamp } from "./util";
+import { CredentialType } from "./types";
+import { getAuthenticatedHeaders, getReqtimestamp, getCurrentClass } from "./util";
 import axiosRetry from "axios-retry";
 import axios from "axios";
+import { LabelledLogger } from "./logger";
 
+const logger = new LabelledLogger("互动答题");
 axiosRetry(axios, { retries: 3 });
 
 let 互动答题WatcherInterval: NodeJS.Timer;
@@ -15,13 +17,13 @@ export function register互动答题Watchers() {
 }
 
 async function 互动答题WatcherLoop() {
-  const class_ = getUndergoing互动答题Class();
+  const class_ = getCurrentClass();
 
   if (class_) {
     const hasIncomplete互动答题 = await checkIncomplete互动答题(credentials[0], class_.classId);
 
     if (hasIncomplete互动答题) {
-      console.log(`[互动答题] Incoming 互动答题 for class ${class_.friendlyName} (${class_.classId})`);
+      logger.info(`Incoming 互动答题 for class ${class_.friendlyName} (${class_.classId})`);
 
       互动答题Events.emit("incoming互动答题", class_);
 
@@ -61,33 +63,4 @@ async function checkIncomplete互动答题(credential: CredentialType, classId: 
     return false;
   }
 
-}
-
-function checkIfInClassNow(class_: 互动答题ClassType): boolean {
-  const now = new Date();
-  const nowDayOfWeek = now.getDay();
-  const nowHour = now.getHours();
-  const nowMinute = now.getMinutes();
-  const targetDayOfWeek = class_.dayOfWeek;
-  const targetStartHour = parseInt(class_.startTime.split(":")[0]);
-  const targetStartMinute = parseInt(class_.startTime.split(":")[1]);
-  const targetEndHour = parseInt(class_.endTime.split(":")[0]);
-  const targetEndMinute = parseInt(class_.endTime.split(":")[1]);
-  if (nowDayOfWeek === targetDayOfWeek) {
-    if (nowHour > targetStartHour || (nowHour === targetStartHour && nowMinute >= targetStartMinute)) {
-      if (nowHour < targetEndHour || (nowHour === targetEndHour && nowMinute <= targetEndMinute)) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-function getUndergoing互动答题Class() {
-  for (const class_ of 互动答题_CLASSES) {
-    if (checkIfInClassNow(class_)) {
-      return class_;
-    }
-  }
-  return null;
 }

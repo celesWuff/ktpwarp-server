@@ -1,6 +1,6 @@
-import { FAKE_IP_PREFIX } from "./config";
+import { CLASSES, FAKE_IP_PREFIX } from "./config";
 import { HEADERS } from "./constants";
-import { CredentialType } from "./types";
+import { ClassType, CredentialType } from "./types";
 
 // 为了消灭 (用户数量 - 1)/254 的概率出现“IP 地址冲突”，使用 Fisher-Yates shuffle 算法替代直接的随机数生成
 class FakeIpSuffix {
@@ -46,7 +46,31 @@ export function getAuthenticatedHeaders(credential: CredentialType): any {
   return headers;
 }
 
-export function restartServer() {
-  console.log("[util] Shutting down server and let pm2 restart it!");
-  setTimeout(() => process.exit(0), 1000);
+function checkIfInClassNow(class_: ClassType): boolean {
+  const now = new Date();
+  const nowDayOfWeek = now.getDay();
+  const nowHour = now.getHours();
+  const nowMinute = now.getMinutes();
+  const targetDayOfWeek = class_.dayOfWeek;
+  const targetStartHour = parseInt(class_.startTime.split(":")[0]);
+  const targetStartMinute = parseInt(class_.startTime.split(":")[1]);
+  const targetEndHour = parseInt(class_.endTime.split(":")[0]);
+  const targetEndMinute = parseInt(class_.endTime.split(":")[1]);
+  if (nowDayOfWeek === targetDayOfWeek) {
+    if (nowHour > targetStartHour || (nowHour === targetStartHour && nowMinute >= targetStartMinute)) {
+      if (nowHour < targetEndHour || (nowHour === targetEndHour && nowMinute <= targetEndMinute)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+export function getCurrentClass() {
+  for (const class_ of CLASSES) {
+    if (checkIfInClassNow(class_)) {
+      return class_;
+    }
+  }
+  return null;
 }

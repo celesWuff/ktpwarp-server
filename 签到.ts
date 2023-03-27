@@ -1,33 +1,48 @@
 import { 签到Events } from "./events";
-import { getAuthenticatedHeaders, getReqtimestamp, randomRange } from "./util";
+import { getAuthenticatedHeaders, getReqtimestamp, getCurrentClass, randomRange } from "./util";
 import { credentials } from "./auth";
-import { classes } from "./classes";
-import { DEFAULT_LATITUDE, MAX_DELAY_SECONDS, MIN_DELAY_SECONDS } from "./config";
-import { CredentialType, 签到ClassType } from "./types";
+import { CLASSES, DEFAULT_LATITUDE, MAX_DELAY_SECONDS, MIN_DELAY_SECONDS, 签到_CHECK_INTERVAL_SECONDS } from "./config";
+import { ClassType, CredentialType } from "./types";
 import axiosRetry from "axios-retry";
 import axios from "axios";
+import { LabelledLogger } from "./logger";
 
+const logger = new LabelledLogger("签到");
 axiosRetry(axios, { retries: 3 });
 
+let hasPending签到 = false;
+
 export function register签到EventHandlers() {
-  签到Events.on("incoming签到", fetch签到Details);
   签到Events.on("new数字签到", (class_, delaySeconds, 签到Id) => delayWrapper(delaySeconds, process数字签到, class_, 签到Id));
   签到Events.on("newGps签到", (class_, delaySeconds, 签到Id) => delayWrapper(delaySeconds, processGps签到, class_, 签到Id));
   签到Events.on("new签入签出签到", (class_, delaySeconds, 签到Id) => delayWrapper(delaySeconds, process签入签出签到, class_, 签到Id));
   // "ticketid" 保留全小写
   签到Events.on("submitQrcode", (ticketid, expire, sign) => processQrcode签到(ticketid, expire, sign));
   签到Events.on("manualCheck", () => {
-    for (const class_ of classes) 签到Events.emit("incoming签到", class_.classId);
+    for (const class_ of CLASSES) checkIncomplete签到(class_);
   });
 }
 
+export function register签到Watchers() {
+  setInterval(签到WatcherLoop, 签到_CHECK_INTERVAL_SECONDS * 1000);
+}
+
+function 签到WatcherLoop() {
+  const currentClass = getCurrentClass();
+
+  if (currentClass) {
+    checkIncomplete签到(currentClass);
+  }
+}
+
 async function delayWrapper(delaySeconds: number, fn: Function, ...args: unknown[]) {
-  console.log(`[签到] Delaying 签到 for ${delaySeconds} seconds...`);
+  logger.info(`Delaying 签到 for ${delaySeconds} seconds...`);
 
   签到Events.once("cancel", () => {
     签到Events.emit("cancelSuccess");
     签到Events.removeAllListeners("cancel");
     签到Events.removeAllListeners("skip");
+    hasPending签到 = false;
     fn = () => {};
   });
 
@@ -45,52 +60,63 @@ async function delayWrapper(delaySeconds: number, fn: Function, ...args: unknown
   fn(...args);
 }
 
-async function fetch签到Details(classId: string) {
-  console.log(`[签到] Fetching 签到 details for class ${classId}...`);
-
+async function checkIncomplete签到(class_: ClassType) {
   const headers = getAuthenticatedHeaders(credentials[0]);
 
   const response = await axios.post(
     "https://openapiv5.ketangpai.com/AttenceApi/getNotFinishAttenceStudent",
     {
-      courseid: classId,
+      courseid: class_.classId,
       reqtimestamp: getReqtimestamp(),
     },
     { headers }
   );
 
   const incomplete签到s = response.data.data.lists;
+  const 签到 = incomplete签到s[0];
 
-  const class_ = classes.find((class_) => class_.classId == classId);
-  
-  if (!class_) {
-    console.log(`[签到] Class ${classId} not found, skipping...`);
-    return;
+  // 在 ktpwarp-server 动作之前就已撤销或结束的签到，按取消签到处理
+  if (!签到 && hasPending签到) {
+    logger.warn("签到 has been cancelled before we move on!")
+    hasPending签到 = false;
+    签到Events.emit("cancel");
   }
+  if (!签到 || hasPending签到) return;
+
+  hasPending签到 = incomplete签到s.length > 0;
 
   const delaySeconds = randomRange(MIN_DELAY_SECONDS, MAX_DELAY_SECONDS);
 
-  for (const 签到 of incomplete签到s) {
-    if (签到.type == "1") {
-      签到Events.emit("new数字签到", class_, delaySeconds, 签到.id);
-    }
+  if (签到.type == "1") {
+    logger.info(`Found 数字签到 for class ${class_.friendlyName} (${class_.classId})`);
+    签到Events.emit("new数字签到", class_, delaySeconds, 签到.id);
+  }
 
-    if (签到.type == "2") {
-      签到Events.emit("newGps签到", class_, delaySeconds, 签到.id);
-    }
+  if (签到.type == "2") {
+    logger.info(`Found GPS 签到 for class ${class_.friendlyName} (${class_.classId})`);
+    签到Events.emit("newGps签到", class_, delaySeconds, 签到.id);
+  }
 
-    if (签到.type == "3") {
-      签到Events.emit("newQrcode签到", class_);
-    }
+  if (签到.type == "3") {
+    logger.info(`Found 二维码签到 for class ${class_.friendlyName} (${class_.classId})`);
+    签到Events.emit("newQrcode签到", class_);
 
-    if (签到.type == "4") {
-      签到Events.emit("new签入签出签到", class_, delaySeconds, 签到.id);
-    }
+    // 二维码签到没有 delayWrapper，在此处理签到被撤回的事件
+    签到Events.once("cancel", () => {
+      签到Events.emit("cancelSuccess");
+      hasPending签到 = false;
+    })
+  }
+
+  if (签到.type == "4") {
+    logger.info(`Found 签入签出签到 for class ${class_.friendlyName} (${class_.classId})`);
+    签到Events.emit("new签入签出签到", class_, delaySeconds, 签到.id);
   }
 }
 
-async function process数字签到(class_: 签到ClassType, 签到Id: string) {
-  console.log(`[签到] Processing 数字签到 for class ${class_.friendlyName} (${class_.classId})...`);
+async function process数字签到(class_: ClassType, 签到Id: string) {
+  logger.info(`Processing 数字签到 for class ${class_.friendlyName} (${class_.classId})...`);
+  hasPending签到 = false;
 
   // extract 数字签到 code
   try {
@@ -106,7 +132,7 @@ async function process数字签到(class_: 签到ClassType, 签到Id: string) {
     );
 
     const code: string = response.data.data.data.code;
-    console.log(`[签到] 数字签到 code is ${code}`);
+    logger.info(`数字签到 code is ${code}`);
     签到Events.emit("数字签到code", code);
 
     Promise.all(
@@ -115,15 +141,16 @@ async function process数字签到(class_: 签到ClassType, 签到Id: string) {
       })
     );
   } catch (e) {
-    console.log(`[签到] Error fetching 数字签到 code: ${e}`);
+    logger.error(`Error fetching 数字签到 code: ${e}`);
     credentials.map((credential) => {
       签到Events.emit("签到failure", credential, "无法获取数字签到码，签到已结束或被删除？");
     });
   }
 }
 
-async function processGps签到(class_: 签到ClassType, 签到Id: string) {
-  console.log(`[签到] Processing GPS 签到 for class ${class_.friendlyName} (${class_.classId})...`);
+async function processGps签到(class_: ClassType, 签到Id: string) {
+  logger.info(`Processing GPS 签到 for class ${class_.friendlyName} (${class_.classId})...`);
+  hasPending签到 = false;
 
   const latitude = class_.latitude ? class_.latitude : DEFAULT_LATITUDE;
   const longitude = class_.longitude ? class_.longitude : DEFAULT_LATITUDE;
@@ -135,53 +162,23 @@ async function processGps签到(class_: 签到ClassType, 签到Id: string) {
   );
 }
 
-async function process签入签出签到(class_: 签到ClassType, 签到Id: string) {
-  console.log(`[签到] Processing 签入签出签到 for class ${class_.friendlyName} (${class_.classId})...`);
+async function process签入签出签到(class_: ClassType, 签到Id: string) {
+  logger.info(`Processing 签入签出签到 for class ${class_.friendlyName} (${class_.classId})...`);
+  hasPending签到 = false;
 
   const latitude = class_.latitude ? class_.latitude : DEFAULT_LATITUDE;
   const longitude = class_.longitude ? class_.longitude : DEFAULT_LATITUDE;
 
-  // 先完成这一次签到
   Promise.all(
     credentials.map((credential) => {
       executeNonQrcode签到(credential, 签到Id, latitude, longitude);
     })
   );
-
-  // 计算预计的签出时间，签出没有 WebSocket 通知，所以需要提前设置
-  try {
-    const headers = getAuthenticatedHeaders(credentials[0]);
-
-    const response = await axios.post(
-      "https://openapiv5.ketangpai.com/SummaryApi/attence",
-      {
-        courseid: class_.classId,
-        page: 1,
-        size: "10",
-        reqtimestamp: getReqtimestamp(),
-      },
-      { headers }
-    );
-
-    const 签到Objects = response.data.data.data;
-    const 签到Object = 签到Objects.find((签到Object: any) => 签到Object.id == 签到Id);
-    const 签出DelaySeconds = 签到Object.checkouttime - new Date().getTime() / 1000;
-
-    // 若不大于 0，代表当前签到是签出
-    if (签出DelaySeconds > 0) {
-      console.log(`[签到] 签出 will be executed in ${签出DelaySeconds} seconds`);
-
-      setTimeout(() => {
-        签到Events.emit("new签入签出签到", class_, randomRange(MIN_DELAY_SECONDS, MAX_DELAY_SECONDS), 签到Id);
-      }, 签出DelaySeconds * 1000);
-    }
-  } catch (e) {
-    console.log(`[签到] Error fetching 签入签出签到 info: ${e}`);
-  }
 }
 
 async function processQrcode签到(ticketid: string, expire: string, sign: string) {
-  console.log(`[签到] Processing qrcode 签到 for ticketid ${ticketid}...`);
+  logger.info(`Processing qrcode 签到 for ticketid ${ticketid}...`);
+  hasPending签到 = false;
 
   Promise.all(
     credentials.map((credential) => {
@@ -191,7 +188,7 @@ async function processQrcode签到(ticketid: string, expire: string, sign: strin
 }
 
 async function executeNonQrcode签到(credential: CredentialType, 签到Id: string, latitude = "", longitude = "", code = "") {
-  console.log(`[签到] Executing non-qrcode 签到 for user ${credential.friendlyName}...`);
+  logger.info(`Executing non-qrcode 签到 for user ${credential.friendlyName}...`);
 
   const headers = getAuthenticatedHeaders(credential);
 
@@ -211,16 +208,16 @@ async function executeNonQrcode签到(credential: CredentialType, 签到Id: stri
   );
 
   if (response.data.data.state == 1) {
-    console.log(`[签到] Successfully 签到 for user ${credential.friendlyName}`);
+    logger.info(`Successfully 签到 for user ${credential.friendlyName}`);
     签到Events.emit("签到success", credential);
   } else {
-    console.log(`[签到] Failed to 签到 for user ${credential.friendlyName}, reason: ${response.data.message}`);
+    logger.info(`Failed to 签到 for user ${credential.friendlyName}, reason: ${response.data.message}`);
     签到Events.emit("签到failure", credential, response.data.message);
   }
 }
 
 async function executeQrcode签到(credential: CredentialType, ticketid: string, expire: string, sign: string) {
-  console.log(`[签到] Executing qrcode 签到 for user ${credential.friendlyName}...`);
+  logger.info(`Executing qrcode 签到 for user ${credential.friendlyName}...`);
 
   const headers = getAuthenticatedHeaders(credential);
 
@@ -236,10 +233,10 @@ async function executeQrcode签到(credential: CredentialType, ticketid: string,
   );
 
   if (response.data.data.state == 8) {
-    console.log(`[签到] Successfully 签到 for user ${credential.friendlyName}`);
+    logger.info(`Successfully 签到 for user ${credential.friendlyName}`);
     签到Events.emit("签到success", credential);
   } else {
-    console.log(`[签到] Failed to 签到 for user ${credential.friendlyName}, reason: ${response.data.message}`);
+    logger.info(`Failed to 签到 for user ${credential.friendlyName}, reason: ${response.data.message}`);
     签到Events.emit("签到failure", credential, response.data.message);
   }
 }

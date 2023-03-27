@@ -4,7 +4,9 @@ import { CredentialType } from "./types";
 import { getReqtimestamp } from "./util";
 import axiosRetry from "axios-retry";
 import axios from "axios";
+import { LabelledLogger } from "./logger";
 
+const logger = new LabelledLogger("auth");
 axiosRetry(axios, { retries: 3 });
 
 export let credentials: CredentialType[] = [];
@@ -26,7 +28,7 @@ export async function login(username: string, password: string) {
 }
 
 export async function loginAll() {
-  console.log("[auth] Logging in...")
+  logger.info("Logging in...")
   
   while (true) {
     let tokens = await Promise.all(USERS.map((user) => login(user.username, user.password)));
@@ -35,10 +37,10 @@ export async function loginAll() {
 
     for (const credential of credentials) {
       if (typeof credential.token === "undefined") {
-        console.log("[auth] At least one login failed, retrying...");
+        logger.info("At least one login failed, retrying...");
         continue;
       } else {
-        console.log(`[auth] ${credentials.length} user(s) logged in`);
+        logger.info(`${credentials.length} user(s) logged in`);
         return;
       }
     }

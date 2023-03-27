@@ -1,3 +1,5 @@
+export const CURRENT_CONFIG_VERSION = 2;
+
 export const HEADERS: any = {
   // Connection: "keep-alive",
   Accept: "application/json, text/plain, */*",
