@@ -15,8 +15,9 @@ export const TLS_KEY_PATH = "/path/to/key.pem";
 
 // WebSocket 服务器路径
 // 例如，此处设置为 "/hunter2" 且使用 TLS，则在 ktpwarp-web（或其他访问方式）填写的地址形如 "wss://example.com:11451/hunter2"
-// 如果使用 nginx 等反向代理服务器，也需要在 nginx 配置文件中设置相同的路径
+// 不使用 TLS 时，则使用 "ws://..." 形式
 
+// 如果使用 nginx 等反向代理服务器，也需要在 nginx 配置文件中设置相同的路径
 // 如果不需要设置路径，可以将此值设置为 "/"，但最好不要这么做
 // 强烈建议将此值设置为一个难以猜测的字符串，相当于登录密码
 export const WEBSOCKET_SERVER_PATH = "/kfccrazythursdayvme50";
