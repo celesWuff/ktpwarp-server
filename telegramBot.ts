@@ -16,12 +16,9 @@ import { CredentialType } from "./types";
 import { getCurrentClass } from "./util";
 import Jimp from "jimp";
 import jsQR from "jsqr";
-import axiosRetry from "axios-retry";
-import axios from "axios";
 import { LabelledLogger } from "./logger";
 
 const logger = new LabelledLogger("telegram bot");
-axiosRetry(axios, { retries: 3 });
 
 const motd = `ktpWarp: 课堂派自动签到
 https://github.com/celesWuff/ktpwarp-server
@@ -91,10 +88,8 @@ export async function createTelegramBot() {
     // ctx.reply("正在识别二维码。");
 
     const url = await ctx.telegram.getFileLink(fileId);
-    const response = await axios.get(url.toString(), { responseType: "arraybuffer" });
-    const arrayBuffer = response.data;
 
-    const image = await Jimp.read(arrayBuffer);
+    const image = await Jimp.read(url.toString());
     const rgbaData = image.bitmap.data;
     const rgbaArray = new Uint8ClampedArray(rgbaData.buffer);
 

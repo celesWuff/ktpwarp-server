@@ -1,30 +1,28 @@
 import { USERS } from "./config";
 import { HEADERS } from "./constants";
 import { CredentialType } from "./types";
-import { getReqtimestamp } from "./util";
-import axiosRetry from "axios-retry";
-import axios from "axios";
+import { fancyFetch, getReqtimestamp } from "./util";
 import { LabelledLogger } from "./logger";
 
 const logger = new LabelledLogger("auth");
-axiosRetry(axios, { retries: 3 });
 
 export let credentials: CredentialType[] = [];
 
 export async function login(username: string, password: string) {
-  const response = await axios.post(
-    "https://openapiv5.ketangpai.com/UserApi/login",
-    {
+  const _response = await fancyFetch("https://openapiv100.ketangpai.com/UserApi/login", {
+    method: "POST",
+    headers: HEADERS,
+    body: {
       email: username,
       password,
       remember: "1",
       source_type: 1,
       reqtimestamp: getReqtimestamp(),
     },
-    { headers: HEADERS }
-  );
+  });
+  const response: any = await _response.json();
 
-  return response.data.data.token;
+  return response.data.token;
 }
 
 export async function loginAll() {

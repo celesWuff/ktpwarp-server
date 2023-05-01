@@ -1,14 +1,11 @@
 import { 签到Events } from "./events";
-import { getAuthenticatedHeaders, getReqtimestamp, getCurrentClass, randomRange } from "./util";
+import { getAuthenticatedHeaders, getReqtimestamp, getCurrentClass, randomRange, fancyFetch } from "./util";
 import { credentials } from "./auth";
 import { CLASSES, DEFAULT_LATITUDE, MAX_DELAY_SECONDS, MIN_DELAY_SECONDS, 签到_CHECK_INTERVAL_SECONDS } from "./config";
 import { ClassType, CredentialType } from "./types";
-import axiosRetry from "axios-retry";
-import axios from "axios";
 import { LabelledLogger } from "./logger";
 
 const logger = new LabelledLogger("签到");
-axiosRetry(axios, { retries: 3 });
 
 let hasPending签到 = false;
 
@@ -63,21 +60,22 @@ async function delayWrapper(delaySeconds: number, fn: Function, ...args: unknown
 async function checkIncomplete签到(class_: ClassType) {
   const headers = getAuthenticatedHeaders(credentials[0]);
 
-  const response = await axios.post(
-    "https://openapiv5.ketangpai.com/AttenceApi/getNotFinishAttenceStudent",
-    {
+  const _response = await fancyFetch("https://openapiv100.ketangpai.com/AttenceApi/getNotFinishAttenceStudent", {
+    method: "POST",
+    headers,
+    body: {
       courseid: class_.classId,
       reqtimestamp: getReqtimestamp(),
     },
-    { headers }
-  );
+  });
+  const response: any = await _response.json();
 
-  const incomplete签到s = response.data.data.lists;
+  const incomplete签到s = response.data.lists;
   const 签到 = incomplete签到s[0];
 
   // 在 ktpwarp-server 动作之前就已撤销或结束的签到，按取消签到处理
   if (!签到 && hasPending签到) {
-    logger.warn("签到 has been cancelled before we move on!")
+    logger.warn("签到 has been cancelled before we move on!");
     hasPending签到 = false;
     签到Events.emit("cancel");
   }
@@ -105,7 +103,7 @@ async function checkIncomplete签到(class_: ClassType) {
     签到Events.once("cancel", () => {
       签到Events.emit("cancelSuccess");
       hasPending签到 = false;
-    })
+    });
   }
 
   if (签到.type == "4") {
@@ -122,16 +120,17 @@ async function process数字签到(class_: ClassType, 签到Id: string) {
   try {
     const headers = getAuthenticatedHeaders(credentials[0]);
 
-    const response = await axios.post(
-      "https://openapiv5.ketangpai.com/AttenceApi/getDigitAttence",
-      {
+    const _response = await fancyFetch("https://openapiv100.ketangpai.com/AttenceApi/getDigitAttence", {
+      method: "POST",
+      headers,
+      body: {
         id: 签到Id,
         reqtimestamp: getReqtimestamp(),
       },
-      { headers }
-    );
+    });
+    const response: any = await _response.json();
 
-    const code: string = response.data.data.data.code;
+    const code: string = response.data.data.code;
     logger.info(`数字签到 code is ${code}`);
     签到Events.emit("数字签到code", code);
 
@@ -192,9 +191,10 @@ async function executeNonQrcode签到(credential: CredentialType, 签到Id: stri
 
   const headers = getAuthenticatedHeaders(credential);
 
-  const response = await axios.post(
-    "https://openapiv5.ketangpai.com/AttenceApi/checkin",
-    {
+  const _response = await fancyFetch("https://openapiv100.ketangpai.com/AttenceApi/checkin", {
+    method: "POST",
+    headers,
+    body: {
       id: 签到Id,
       code,
       unusual: "",
@@ -204,15 +204,15 @@ async function executeNonQrcode签到(credential: CredentialType, 签到Id: stri
       clienttype: 1,
       reqtimestamp: getReqtimestamp(),
     },
-    { headers }
-  );
+  });
+  const response: any = await _response.json();
 
-  if (response.data.data.state == 1) {
+  if (response.data.state == 1) {
     logger.info(`Successfully 签到 for user ${credential.friendlyName}`);
     签到Events.emit("签到success", credential);
   } else {
-    logger.info(`Failed to 签到 for user ${credential.friendlyName}, reason: ${response.data.message}`);
-    签到Events.emit("签到failure", credential, response.data.message);
+    logger.info(`Failed to 签到 for user ${credential.friendlyName}, reason: ${response.message}`);
+    签到Events.emit("签到failure", credential, response.message);
   }
 }
 
@@ -221,22 +221,23 @@ async function executeQrcode签到(credential: CredentialType, ticketid: string,
 
   const headers = getAuthenticatedHeaders(credential);
 
-  const response = await axios.post(
-    "https://openapiv5.ketangpai.com/AttenceApi/AttenceResult",
-    {
+  const _response = await fancyFetch("https://openapiv100.ketangpai.com/AttenceApi/AttenceResult", {
+    method: "POST",
+    headers,
+    body: {
       ticketid,
       expire,
       sign,
       reqtimestamp: getReqtimestamp(),
     },
-    { headers }
-  );
+  });
+  const response: any = await _response.json();
 
-  if (response.data.data.state == 8) {
+  if (response.data.state == 8) {
     logger.info(`Successfully 签到 for user ${credential.friendlyName}`);
     签到Events.emit("签到success", credential);
   } else {
-    logger.info(`Failed to 签到 for user ${credential.friendlyName}, reason: ${response.data.message}`);
-    签到Events.emit("签到failure", credential, response.data.message);
+    logger.info(`Failed to 签到 for user ${credential.friendlyName}, reason: ${response.message}`);
+    签到Events.emit("签到failure", credential, response.message);
   }
 }

@@ -1,6 +1,10 @@
 import { CLASSES, FAKE_IP_PREFIX } from "./config";
 import { HEADERS } from "./constants";
+import { LabelledLogger } from "./logger";
 import { ClassType, CredentialType } from "./types";
+import { fetch } from "@adobe/fetch";
+
+const logger = new LabelledLogger("util");
 
 // 为了消灭 (用户数量 - 1)/254 的概率出现“IP 地址冲突”，使用 Fisher-Yates shuffle 算法替代直接的随机数生成
 class FakeIpSuffix {
@@ -73,4 +77,22 @@ export function getCurrentClass() {
     }
   }
   return null;
+}
+
+export async function fancyFetch(...args: Parameters<typeof fetch>) {
+  const maxRetries = 3;
+  let retry = 0;
+
+  while (retry < maxRetries) {
+    try {
+      return await fetch(...args);
+    } catch (e) {
+      retry++;
+      if (retry === maxRetries) {
+        throw e;
+      }
+      logger.warn(`Retrying fetch... (${retry}/${maxRetries}), error: ${(e as any).code?.toString()}`);
+    }
+  }
+  throw new Error("Unreachable");
 }

@@ -2,13 +2,10 @@ import { credentials } from "./auth";
 import { 互动答题_CHECK_DELAY_SECONDS, 互动答题_CHECK_INTERVAL_SECONDS } from "./config";
 import { 互动答题Events } from "./events";
 import { CredentialType } from "./types";
-import { getAuthenticatedHeaders, getReqtimestamp, getCurrentClass } from "./util";
-import axiosRetry from "axios-retry";
-import axios from "axios";
+import { getAuthenticatedHeaders, getReqtimestamp, getCurrentClass, fancyFetch } from "./util";
 import { LabelledLogger } from "./logger";
 
 const logger = new LabelledLogger("互动答题");
-axiosRetry(axios, { retries: 3 });
 
 let 互动答题WatcherInterval: NodeJS.Timer;
 
@@ -37,9 +34,10 @@ async function 互动答题WatcherLoop() {
 async function checkIncomplete互动答题(credential: CredentialType, classId: string) {
   const headers = getAuthenticatedHeaders(credential);
 
-  const response = await axios.post(
-    "https://openapiv5.ketangpai.com/FutureV2/CourseMeans/getCourseContent",
-    {
+  const _response = await fancyFetch("https://openapiv100.ketangpai.com/FutureV2/CourseMeans/getCourseContent", {
+    method: "POST",
+    headers,
+    body: {
       courseid: classId,
       courserole: 0,
       contenttype: 3,
@@ -50,14 +48,14 @@ async function checkIncomplete互动答题(credential: CredentialType, classId: 
       limit: 20,
       reqtimestamp: getReqtimestamp(),
     },
-    { headers }
-  );
+  });
+  const response: any = await _response.json();
 
-  if (response.data.data.list.length === 0) {
+  if (response.data.list.length === 0) {
     return false;
   }
 
-  if (response.data.data.list[0].testInfo.state == 0) {
+  if (response.data.list[0].testInfo.state == 0) {
     return true;
   } else {
     return false;
