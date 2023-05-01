@@ -8,6 +8,7 @@ import { LabelledLogger } from "./logger";
 const logger = new LabelledLogger("签到");
 
 let hasPending签到 = false;
+let 签到ProgressCount = 0;
 
 export function register签到EventHandlers() {
   签到Events.on("new数字签到", (class_, delaySeconds, 签到Id) => delayWrapper(delaySeconds, process数字签到, class_, 签到Id));
@@ -116,7 +117,6 @@ async function checkIncomplete签到(class_: ClassType) {
 
 async function process数字签到(class_: ClassType, 签到Id: string) {
   logger.info(`Processing 数字签到 for class ${class_.friendlyName} (${class_.classId})...`);
-  hasPending签到 = false;
 
   // extract 数字签到 code
   try {
@@ -151,7 +151,6 @@ async function process数字签到(class_: ClassType, 签到Id: string) {
 
 async function processGps签到(class_: ClassType, 签到Id: string) {
   logger.info(`Processing GPS 签到 for class ${class_.friendlyName} (${class_.classId})...`);
-  hasPending签到 = false;
 
   const latitude = class_.latitude ? class_.latitude : DEFAULT_LATITUDE;
   const longitude = class_.longitude ? class_.longitude : DEFAULT_LONGITUDE;
@@ -165,7 +164,6 @@ async function processGps签到(class_: ClassType, 签到Id: string) {
 
 async function process签入签出签到(class_: ClassType, 签到Id: string) {
   logger.info(`Processing 签入签出签到 for class ${class_.friendlyName} (${class_.classId})...`);
-  hasPending签到 = false;
 
   const latitude = class_.latitude ? class_.latitude : DEFAULT_LATITUDE;
   const longitude = class_.longitude ? class_.longitude : DEFAULT_LONGITUDE;
@@ -177,9 +175,14 @@ async function process签入签出签到(class_: ClassType, 签到Id: string) {
   );
 }
 
+// 阻止多个二维码签到同时进行，在极低概率下 ktpwarp-web 可能会在一次扫码后提交数次相同的二维码
+let qrcode签到Lock = false;
+
 async function processQrcode签到(ticketid: string, expire: string, sign: string) {
   logger.info(`Processing qrcode 签到 for ticketid ${ticketid}...`);
-  hasPending签到 = false;
+
+  if (qrcode签到Lock) return;
+  qrcode签到Lock = true;
 
   Promise.all(
     credentials.map((credential) => {
@@ -216,6 +219,13 @@ async function executeNonQrcode签到(credential: CredentialType, 签到Id: stri
     logger.info(`Failed to 签到 for user ${credential.friendlyName}, reason: ${response.message}`);
     签到Events.emit("签到failure", credential, response.message);
   }
+
+  签到ProgressCount++;
+  if (签到ProgressCount === credentials.length) {
+    logger.info(`All 签到 finished`);
+    签到ProgressCount = 0;
+    hasPending签到 = false;
+  }
 }
 
 async function executeQrcode签到(credential: CredentialType, ticketid: string, expire: string, sign: string) {
@@ -241,5 +251,14 @@ async function executeQrcode签到(credential: CredentialType, ticketid: string,
   } else {
     logger.info(`Failed to 签到 for user ${credential.friendlyName}, reason: ${response.message}`);
     签到Events.emit("签到failure", credential, response.message);
+  }
+
+  签到ProgressCount++;
+  if (签到ProgressCount === credentials.length) {
+    logger.info(`All 签到 finished`);
+    签到ProgressCount = 0;
+    hasPending签到 = false;
+
+    qrcode签到Lock = false;
   }
 }
