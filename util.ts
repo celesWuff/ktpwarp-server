@@ -79,6 +79,17 @@ export function getCurrentClass() {
   return null;
 }
 
+export function getDeduplicatedClasses() {
+  const currentClass = getCurrentClass();
+  const simpleDeduplicatedClasses = CLASSES.filter((value, index, self) => index === self.findIndex((t) => t.classId === value.classId));
+
+  if (currentClass === null) {
+    return simpleDeduplicatedClasses;
+  } else {
+    return [currentClass, ...simpleDeduplicatedClasses.filter((class_) => class_.classId !== currentClass.classId)];
+  }
+}
+
 export async function fancyFetch(...args: Parameters<typeof fetch>) {
   const maxRetries = 3;
   let retry = 0;

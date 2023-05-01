@@ -1,5 +1,5 @@
 import { 签到Events } from "./events";
-import { getAuthenticatedHeaders, getReqtimestamp, getCurrentClass, randomRange, fancyFetch } from "./util";
+import { getAuthenticatedHeaders, getReqtimestamp, getCurrentClass, randomRange, fancyFetch, getDeduplicatedClasses } from "./util";
 import { credentials } from "./auth";
 import { CLASSES, DEFAULT_LATITUDE, DEFAULT_LONGITUDE, MAX_DELAY_SECONDS, MIN_DELAY_SECONDS, 签到_CHECK_INTERVAL_SECONDS } from "./config";
 import { ClassType, CredentialType } from "./types";
@@ -13,10 +13,12 @@ export function register签到EventHandlers() {
   签到Events.on("new数字签到", (class_, delaySeconds, 签到Id) => delayWrapper(delaySeconds, process数字签到, class_, 签到Id));
   签到Events.on("newGps签到", (class_, delaySeconds, 签到Id) => delayWrapper(delaySeconds, processGps签到, class_, 签到Id));
   签到Events.on("new签入签出签到", (class_, delaySeconds, 签到Id) => delayWrapper(delaySeconds, process签入签出签到, class_, 签到Id));
+
   // "ticketid" 保留全小写
   签到Events.on("submitQrcode", (ticketid, expire, sign) => processQrcode签到(ticketid, expire, sign));
+
   签到Events.on("manualCheck", () => {
-    for (const class_ of CLASSES) checkIncomplete签到(class_);
+    for (const class_ of getDeduplicatedClasses()) checkIncomplete签到(class_);
   });
 }
 
