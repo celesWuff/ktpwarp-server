@@ -1,7 +1,7 @@
 import { 签到Events } from "./events";
 import { getAuthenticatedHeaders, getReqtimestamp, getCurrentClass, randomRange, fancyFetch } from "./util";
 import { credentials } from "./auth";
-import { CLASSES, DEFAULT_LATITUDE, MAX_DELAY_SECONDS, MIN_DELAY_SECONDS, 签到_CHECK_INTERVAL_SECONDS } from "./config";
+import { CLASSES, DEFAULT_LATITUDE, DEFAULT_LONGITUDE, MAX_DELAY_SECONDS, MIN_DELAY_SECONDS, 签到_CHECK_INTERVAL_SECONDS } from "./config";
 import { ClassType, CredentialType } from "./types";
 import { LabelledLogger } from "./logger";
 
@@ -152,7 +152,7 @@ async function processGps签到(class_: ClassType, 签到Id: string) {
   hasPending签到 = false;
 
   const latitude = class_.latitude ? class_.latitude : DEFAULT_LATITUDE;
-  const longitude = class_.longitude ? class_.longitude : DEFAULT_LATITUDE;
+  const longitude = class_.longitude ? class_.longitude : DEFAULT_LONGITUDE;
 
   Promise.all(
     credentials.map((credential) => {
@@ -166,7 +166,7 @@ async function process签入签出签到(class_: ClassType, 签到Id: string) {
   hasPending签到 = false;
 
   const latitude = class_.latitude ? class_.latitude : DEFAULT_LATITUDE;
-  const longitude = class_.longitude ? class_.longitude : DEFAULT_LATITUDE;
+  const longitude = class_.longitude ? class_.longitude : DEFAULT_LONGITUDE;
 
   Promise.all(
     credentials.map((credential) => {
