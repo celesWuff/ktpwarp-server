@@ -1,5 +1,5 @@
 import { 签到Events } from "./events";
-import { getAuthenticatedHeaders, getReqtimestamp, getCurrentClass, randomRange, fancyFetch, getDeduplicatedClasses } from "./util";
+import { getAuthenticatedHeaders, getReqtimestamp, getCurrentClass, randomRange, fancyFetch, getDeduplicatedClasses, fakeIpPrefix, fakeIpSuffix } from "./util";
 import { credentials } from "./auth";
 import { CLASSES, DEFAULT_LATITUDE, DEFAULT_LONGITUDE, MAX_DELAY_SECONDS, MIN_DELAY_SECONDS, 签到_CHECK_INTERVAL_SECONDS } from "./config";
 import { ClassType, CredentialType } from "./types";
@@ -194,6 +194,9 @@ async function processQrcode签到(ticketid: string, expire: string, sign: strin
 async function executeNonQrcode签到(credential: CredentialType, 签到Id: string, latitude = "", longitude = "", code = "") {
   logger.info(`Executing non-qrcode 签到 for user ${credential.friendlyName}...`);
 
+  fakeIpSuffix.reset();
+  fakeIpPrefix.reset();
+
   const headers = getAuthenticatedHeaders(credential);
 
   const _response = await fancyFetch("https://openapiv100.ketangpai.com/AttenceApi/checkin", {
@@ -230,6 +233,9 @@ async function executeNonQrcode签到(credential: CredentialType, 签到Id: stri
 
 async function executeQrcode签到(credential: CredentialType, ticketid: string, expire: string, sign: string) {
   logger.info(`Executing qrcode 签到 for user ${credential.friendlyName}...`);
+
+  fakeIpSuffix.reset();
+  fakeIpPrefix.reset();
 
   const headers = getAuthenticatedHeaders(credential);
 

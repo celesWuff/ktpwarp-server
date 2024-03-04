@@ -15,6 +15,7 @@ class FakeIpSuffix {
   }
 
   private generateAndShuffle() {
+    this.nums = [];
     for (let i = 1; i <= 254; i++) {
       this.nums.push(i);
     }
@@ -31,9 +32,53 @@ class FakeIpSuffix {
     }
     return this.nums.pop();
   }
+
+  public reset() {
+    this.generateAndShuffle();
+  }
 }
 
-const fakeIpSuffix = new FakeIpSuffix();
+class FakeIpPrefix {
+  private prefixes: string[] = [];
+
+  constructor() {
+    if (typeof FAKE_IP_PREFIX !== "string") {
+      this.generateAndShuffle();
+    }
+  }
+
+  private generateAndShuffle() {
+    for (const prefix of FAKE_IP_PREFIX) {
+      this.prefixes.push(prefix);
+    }
+
+    this.prefixes = [];
+    for (let i = this.prefixes.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [this.prefixes[i], this.prefixes[j]] = [this.prefixes[j], this.prefixes[i]];
+    }
+  }
+
+  public next() {
+    if (typeof FAKE_IP_PREFIX === "string") {
+      return FAKE_IP_PREFIX;
+    }
+
+    if (this.prefixes.length === 0) {
+      this.generateAndShuffle();
+    }
+    return this.prefixes.pop();
+  }
+
+  public reset() {
+    if (typeof FAKE_IP_PREFIX !== "string") {
+      this.generateAndShuffle();
+    }
+  }
+}
+
+export const fakeIpSuffix = new FakeIpSuffix();
+export const fakeIpPrefix = new FakeIpPrefix();
 
 export function getReqtimestamp(): number {
   return Date.now();
@@ -46,7 +91,7 @@ export function randomRange(min: number, max: number) {
 export function getAuthenticatedHeaders(credential: CredentialType): any {
   const headers = structuredClone(HEADERS);
   headers["token"] = credential.token;
-  headers["X-Forwarded-For"] = FAKE_IP_PREFIX + fakeIpSuffix.next();
+  headers["X-Forwarded-For"] = fakeIpPrefix.next()! + fakeIpSuffix.next()!;
   return headers;
 }
 

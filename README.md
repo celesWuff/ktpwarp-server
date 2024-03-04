@@ -10,7 +10,7 @@ ktpWarp: 课堂派自动签到
 
 - 针对二维码签到的高效缓解措施
 
-- - 成功率极高：即使在极端恶劣的网络环境下（客户端、服务端皆双向 500 ms 延迟，丢包率 10%，最短的签到二维码切换间隔，10 位用户），每次提交二维码时也能确保不低于 70% 的成功率
+  - 成功率极高：即使在极端恶劣的网络环境下（客户端、服务端皆双向 500 ms 延迟，丢包率 10%，最短的签到二维码切换间隔，10 位用户），每次提交二维码时也能确保不低于 70% 的成功率
 
 - 支持多用户
 
@@ -42,33 +42,41 @@ Android app 的扫码速度最快，而 iOS MITM 模块可以让您自行选择�
 
 ## 部署
 
-1. 安装 Node.js 18 或更高版本
+1. 将本仓库 clone 到您的服务器或本地电脑
 
-2. 运行 `corepack enable`，如果您熟悉 Node.js，也可以选择您喜欢的方式使用 pnpm，或其他包管理器
+2. 安装 Node.js 18 或更高版本
 
-3. 将 `config.example.ts` 重命名为 `config.ts` 并修改其中的配置
+3. 运行 `corepack enable`，如果您熟悉 Node.js，也可以选择您喜欢的方式使用 pnpm，或其他包管理器
 
-3. 运行 `pnpm install`
+4. 将 `config.example.ts` 重命名为 `config.ts` 并修改其中的配置
 
-4. 运行 `pnpm start` 启动
+5. 运行 `pnpm install`
 
-5. 运行 `pnpm stop` 停止
+6. 运行 `pnpm dev` 在开发模式下启动，检查程序的输出，确保您的配置正确，能够正常登录所有用户，并且可以使用客户端连接，然后按 `Ctrl + C` 停止
+
+7. 运行 `pnpm start` 启动服务，ktpwarp-server 会在后台运行
+
+8. 运行 `pnpm stop` 停止服务
 
 ## 名字
 
-ktpWarp 是整个项目的名称，包括了 ktpwarp-server、ktpwarp-web、ktpwarp-ios-mitm 和 ktpwarp-android。
+ktpWarp 是本项目的总称，包括了 ktpwarp-server、ktpwarp-web、ktpwarp-ios-mitm 和 ktpwarp-android。
 
-ktpwarp-server 是 ktpWarp 项目的核心，它负责与课堂派进行交互，完成签到，它也配备了充当客户端的 Telegram 机器人，供用户进行操作。
+ktpwarp-server 是项目的核心，它负责与课堂派进行交互，完成签到，它也配备了充当客户端的 Telegram 机器人，供用户进行操作。
 
 其余三个项目均为 ktpwarp-server 的客户端。
 
-ktpwarp-web 是 ktpWarp 项目的 Web 前端，它负责与 ktpwarp-server 交互，提供 Web 界面，您也可以在浏览器中打开 ktpwarp-web 来进行扫码，但速度不如另外两个。
+ktpwarp-web 是项目的 Web 客户端，您可以在浏览器中通过它查看和管理您的 ktpwarp-server，也可以使用该 Web 客户端来进行扫码，但速度不如另外两个。
 
-ktpwarp-ios-mitm 是 ktpWarp 项目的 iOS MITM 脚本，它负责将您扫描到的每一个课堂派签到二维码重定向给 ktpwarp-server，同时也提供 Web 界面。
+ktpwarp-ios-mitm 是项目的 iOS MITM 脚本，它负责将您扫描到的每一个课堂派签到二维码重定向给 ktpwarp-server，同时也提供 Web 界面。
 
-ktpwarp-android 是 ktpWarp 项目的 Android app，它能够直接进行扫码并将结果提交给 ktpwarp-server，同时提供 Android 界面。
+ktpwarp-android 是项目的 Android app，它能够直接进行扫码并将结果提交给 ktpwarp-server。
 
 ## 更新日志
+
+### 1.3
+
+- 现在，您可以添加多个 IP 地址前缀，程序会随机选择一个，并且会优先选择不重复的
 
 ### 1.2
 
