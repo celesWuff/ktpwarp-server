@@ -7,78 +7,68 @@ import { fetch } from "@adobe/fetch";
 const logger = new LabelledLogger("util");
 
 // 为了消灭 (用户数量 - 1)/254 的概率出现“IP 地址冲突”，使用 Fisher-Yates shuffle 算法替代直接的随机数生成
-class FakeIpSuffix {
-  private nums: number[] = [];
-
-  constructor() {
-    this.generateAndShuffle();
-  }
-
-  private generateAndShuffle() {
-    this.nums = [];
-    for (let i = 1; i <= 254; i++) {
-      this.nums.push(i);
-    }
-
-    for (let i = this.nums.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [this.nums[i], this.nums[j]] = [this.nums[j], this.nums[i]];
-    }
-  }
-
-  public next() {
-    if (this.nums.length === 0) {
-      this.generateAndShuffle();
-    }
-    return this.nums.pop();
-  }
-
-  public reset() {
-    this.generateAndShuffle();
-  }
-}
-
-class FakeIpPrefix {
+class FakeIp {
   private prefixes: string[] = [];
+  private suffixes: number[] = [];
+
+  // for backward compatibility
+  private fakeIpPrefix: string | string[] = FAKE_IP_PREFIX;
 
   constructor() {
-    if (typeof FAKE_IP_PREFIX !== "string") {
-      this.generateAndShuffle();
-    }
+    this.generatePrefixes();
+    this.generateSuffixes();
   }
 
-  private generateAndShuffle() {
-    for (const prefix of FAKE_IP_PREFIX) {
-      this.prefixes.push(prefix);
+  private generatePrefixes() {
+    if (typeof this.fakeIpPrefix === "string") {
+      this.prefixes = [this.fakeIpPrefix];
+      return;
     }
 
     this.prefixes = [];
+
+    for (const prefix of this.fakeIpPrefix) {
+      this.prefixes.push(prefix);
+    }
+
     for (let i = this.prefixes.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [this.prefixes[i], this.prefixes[j]] = [this.prefixes[j], this.prefixes[i]];
     }
   }
 
-  public next() {
-    if (typeof FAKE_IP_PREFIX === "string") {
-      return FAKE_IP_PREFIX;
+  private generateSuffixes() {
+    this.suffixes = [];
+
+    for (let i = 1; i <= 254; i++) {
+      this.suffixes.push(i);
     }
 
-    if (this.prefixes.length === 0) {
-      this.generateAndShuffle();
+    for (let i = this.suffixes.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [this.suffixes[i], this.suffixes[j]] = [this.suffixes[j], this.suffixes[i]];
     }
-    return this.prefixes.pop();
+  }
+
+  public next() {
+    if (this.prefixes.length === 0) {
+      this.generatePrefixes();
+    }
+
+    if (this.suffixes.length === 0) {
+      this.generateSuffixes();
+    }
+
+    return this.prefixes.pop()!.concat(this.suffixes.pop()!.toString());
   }
 
   public reset() {
-    if (typeof FAKE_IP_PREFIX !== "string") {
-      this.generateAndShuffle();
-    }
+    this.generatePrefixes();
+    this.generateSuffixes();
   }
 }
 
-export const fakeIpSuffix = new FakeIpSuffix();
-export const fakeIpPrefix = new FakeIpPrefix();
+export const fakeIp = new FakeIp();
 
 export function getReqtimestamp(): number {
   return Date.now();
@@ -91,7 +81,7 @@ export function randomRange(min: number, max: number) {
 export function getAuthenticatedHeaders(credential: CredentialType): any {
   const headers = structuredClone(HEADERS);
   headers["token"] = credential.token;
-  headers["X-Forwarded-For"] = fakeIpPrefix.next()! + fakeIpSuffix.next()!;
+  headers["X-Forwarded-For"] = fakeIp.next();
   return headers;
 }
 

@@ -1,7 +1,7 @@
 import { 签到Events } from "./events";
-import { getAuthenticatedHeaders, getReqtimestamp, getCurrentClass, randomRange, fancyFetch, getDeduplicatedClasses, fakeIpPrefix, fakeIpSuffix } from "./util";
+import { getAuthenticatedHeaders, getReqtimestamp, getCurrentClass, randomRange, fancyFetch, getDeduplicatedClasses, fakeIp } from "./util";
 import { credentials } from "./auth";
-import { CLASSES, DEFAULT_LATITUDE, DEFAULT_LONGITUDE, MAX_DELAY_SECONDS, MIN_DELAY_SECONDS, 签到_CHECK_INTERVAL_SECONDS } from "./config";
+import { DEFAULT_LATITUDE, DEFAULT_LONGITUDE, MAX_DELAY_SECONDS, MIN_DELAY_SECONDS, 签到_CHECK_INTERVAL_SECONDS } from "./config";
 import { ClassType, CredentialType } from "./types";
 import { LabelledLogger } from "./logger";
 
@@ -194,8 +194,7 @@ async function processQrcode签到(ticketid: string, expire: string, sign: strin
 async function executeNonQrcode签到(credential: CredentialType, 签到Id: string, latitude = "", longitude = "", code = "") {
   logger.info(`Executing non-qrcode 签到 for user ${credential.friendlyName}...`);
 
-  fakeIpSuffix.reset();
-  fakeIpPrefix.reset();
+  fakeIp.reset();
 
   const headers = getAuthenticatedHeaders(credential);
 
@@ -234,8 +233,7 @@ async function executeNonQrcode签到(credential: CredentialType, 签到Id: stri
 async function executeQrcode签到(credential: CredentialType, ticketid: string, expire: string, sign: string) {
   logger.info(`Executing qrcode 签到 for user ${credential.friendlyName}...`);
 
-  fakeIpSuffix.reset();
-  fakeIpPrefix.reset();
+  fakeIp.reset();
 
   const headers = getAuthenticatedHeaders(credential);
 
