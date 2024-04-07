@@ -27,7 +27,7 @@ export const WEBSOCKET_SERVER_PATH = "/kfccrazythursdayvme50";
 export const ENABLE_TELEGRAM_BOT = true;
 
 // Telegram 机器人 Token
-export const TELEGRAM_BOT_TOKEN = "1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+export const TELEGRAM_BOT_TOKEN = "4567890123:ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 // Telegram 机器人接收消息的群组或用户 ID
 export const TELEGRAM_CHAT_ID = 1234567890;
@@ -52,7 +52,9 @@ export const TELEGRAM_BOT_API_URL = "https://api.telegram.org";
 
 // 用户信息，可以添加多个用户
 // 可以使用手机号码、邮箱地址，或“ktp”开头的账号名字作为用户名
+
 // 注意，第一个用户将被用于监测签到，因此需要保证第一个用户的课程是完整的（即：第二位及以后的用户所加入的课程，必须是第一位用户所加入的课程的子集）
+// 存在特殊情况：若某一门课进行二维码签到，则原本不在该课程内的用户，在执行二维码签到后会被加入该课程；其他类型的签到不受影响，签到不会生效，也不会被加入到对应课程
 export const USERS: UserType[] = [
   {
     friendlyName: "学生的名字，可以随便设置一个，不需要严格与实际名字一致，这个名字会出现在签到结果的播报中",
