@@ -58,6 +58,10 @@ Android app 的扫码速度最快，而 iOS MITM 模块可以让您自行选择�
 
 8. 运行 `pnpm stop` 停止服务
 
+## 安全提醒
+
+ktpwarp-server 无法在 GitHub Actions 运行，**请勿以任何方式将 config.ts 提交到 git 中**，否则您的课堂派账号密码及 Telegram Bot token 等信息将对所有人可见。
+
 ## 名字
 
 ktpWarp 是本项目的总称，包括了 ktpwarp-server、ktpwarp-web、ktpwarp-ios-mitm 和 ktpwarp-android。
