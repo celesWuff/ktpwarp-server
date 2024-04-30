@@ -3,6 +3,7 @@ import { HEADERS } from "./constants";
 import { LabelledLogger } from "./logger";
 import { ClassType, CredentialType } from "./types";
 import { fetch } from "@adobe/fetch";
+import { DateTime } from "luxon";
 
 const logger = new LabelledLogger("util");
 
@@ -86,10 +87,10 @@ export function getAuthenticatedHeaders(credential: CredentialType): any {
 }
 
 function checkIfInClassNow(class_: ClassType): boolean {
-  const now = new Date();
-  const nowDayOfWeek = now.getDay();
-  const nowHour = now.getHours();
-  const nowMinute = now.getMinutes();
+  const now = DateTime.now().setZone("Asia/Shanghai");
+  const nowDayOfWeek = now.weekday === 7 ? 0 : now.weekday;
+  const nowHour = now.hour;
+  const nowMinute = now.minute;
   const targetDayOfWeek = class_.dayOfWeek;
   const targetStartHour = parseInt(class_.startTime.split(":")[0]);
   const targetStartMinute = parseInt(class_.startTime.split(":")[1]);
