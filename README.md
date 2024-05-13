@@ -26,6 +26,12 @@ ktpWarp: 课堂派自动签到
 
   - Android app：[ktpwarp-android](https://github.com/celesWuff/ktpwarp-android)
 
+## 1.3.4-beta 紧急更新说明
+
+目前，由于课堂派 `openapiv100` 后端关闭，1.2.0-beta 至 1.3.3-beta 的版本可能已经无法正常使用。如果您遇到了该问题，请更新至 1.3.4-beta 版本。
+
+1.3.4-beta 签到效率受限制，请参考 https://github.com/celesWuff/ktpwarp-server/issues/11#issuecomment-2106758958 了解详情。
+
 ## 注意
 
 ktpWarp 仍处于 Beta 阶段，这代表 ktpWarp 尚未在生产环境中得到大规模的验证。

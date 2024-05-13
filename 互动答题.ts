@@ -34,7 +34,7 @@ async function 互动答题WatcherLoop() {
 async function checkIncomplete互动答题(credential: CredentialType, classId: string) {
   const headers = getAuthenticatedHeaders(credential);
 
-  const _response = await fancyFetch("https://openapiv100.ketangpai.com/FutureV2/CourseMeans/getCourseContent", {
+  const _response = await fancyFetch("https://openapiv5.ketangpai.com/FutureV2/CourseMeans/getCourseContent", {
     method: "POST",
     headers,
     body: {
