@@ -14,9 +14,10 @@ import { KTPWARP_SERVER_VERSION, NODEJS_VERSION, WEEKDAY_NAMES } from "./constan
 import { 互动答题Events, 签到Events } from "./events";
 import { CredentialType } from "./types";
 import { getCurrentClass } from "./util";
-import Jimp from "jimp";
+import { Jimp } from "jimp";
 import jsQR from "jsqr";
 import { LabelledLogger } from "./logger";
+import { ExtraReplyMessage } from "telegraf/typings/telegram-types";
 
 const logger = new LabelledLogger("telegram bot");
 
@@ -49,7 +50,7 @@ export async function createTelegramBot() {
     logger.info("Received /start command from: " + ctx.chat.id);
     ctx.reply(motd, {
       disable_web_page_preview: true,
-    });
+    } as ExtraReplyMessage);
   });
 
   bot.command("check", (ctx) => {

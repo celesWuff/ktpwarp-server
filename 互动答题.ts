@@ -7,7 +7,7 @@ import { LabelledLogger } from "./logger";
 
 const logger = new LabelledLogger("互动答题");
 
-let 互动答题WatcherInterval: NodeJS.Timer;
+let 互动答题WatcherInterval: NodeJS.Timeout;
 
 export function register互动答题Watchers() {
   互动答题WatcherInterval = setInterval(互动答题WatcherLoop, 互动答题_CHECK_INTERVAL_SECONDS * 1000);
