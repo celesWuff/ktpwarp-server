@@ -23,7 +23,7 @@ const logger = new LabelledLogger("telegram bot");
 
 const motd = `ktpWarp: 课堂派自动签到
 https://github.com/celesWuff/ktpwarp-server
-copyright (c) 2023 celesWuff, licensed under MIT License
+copyright (c) 2025 celesWuff, licensed under MIT License
 
 ktpwarp-server ${KTPWARP_SERVER_VERSION}
 Node.js ${NODEJS_VERSION}
